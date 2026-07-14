@@ -16,7 +16,7 @@
             <h1>Sef Peluqueria</h1>
             <p>Reserva tu turno en minutos y gestiona tus citas desde un solo lugar.</p>
             <p>
-                <a href="{{ url_for('agenda') }}">Ver turnos</a>
+                <a href="{{ url_for('agenda', require_login=1) }}">Ver turnos</a>
             </p>
         </div>
     </header>

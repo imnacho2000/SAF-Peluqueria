@@ -28,7 +28,7 @@ class AppTests(unittest.TestCase):
         self.assertIn(b"Contrase\xc3\xb1a de agenda", response.data)
         self.assertNotIn(b"Agenda de turnos", response.data)
 
-    def test_agenda_requires_password_on_every_visit(self):
+    def test_agenda_keeps_access_within_the_same_session(self):
         self.client.post(
             "/agenda",
             data={"agenda_password": "123"},
@@ -37,7 +37,20 @@ class AppTests(unittest.TestCase):
 
         response = self.client.get("/agenda")
         self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Agenda de turnos", response.data)
+
+    def test_agenda_requires_password_again_after_returning_home(self):
+        self.client.post(
+            "/agenda",
+            data={"agenda_password": "123"},
+            follow_redirects=True,
+        )
+        self.client.get("/")
+
+        response = self.client.get("/agenda?require_login=1")
+        self.assertEqual(response.status_code, 200)
         self.assertIn(b"Contrase\xc3\xb1a de agenda", response.data)
+        self.assertNotIn(b"Agenda de turnos", response.data)
 
     def test_agenda_search_by_date_filters_results(self):
         self.client.post(
