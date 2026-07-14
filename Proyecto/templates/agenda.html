@@ -24,7 +24,7 @@
             <form method="get" action="{{ url_for('agenda') }}" style="margin-bottom: 1rem;">
                 <label>
                     Buscar por fecha
-                    <input type="date" name="search_date" value="{{ search_date or '' }}" />
+                    <input type="date" name="search_date" value="{{ search_date or today_date }}" />
                 </label>
                 <button type="submit">Filtrar</button>
                 {% if search_date %}

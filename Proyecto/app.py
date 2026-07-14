@@ -54,13 +54,16 @@ def create_app(db_path=None):
 
         appointments = get_appointments()
         search_date = request.args.get("search_date", "").strip()
-        if search_date:
-            try:
-                parsed_search_date = datetime.strptime(search_date, "%Y-%m-%d")
-                search_date_display = parsed_search_date.strftime("%d/%m/%Y")
-            except ValueError:
-                search_date_display = search_date
-            appointments = [a for a in appointments if a["appointment_date"] == search_date_display]
+        if not search_date:
+            search_date = datetime.now().strftime("%Y-%m-%d")
+
+        try:
+            parsed_search_date = datetime.strptime(search_date, "%Y-%m-%d")
+            search_date_display = parsed_search_date.strftime("%d/%m/%Y")
+        except ValueError:
+            search_date_display = search_date
+
+        appointments = [a for a in appointments if a["appointment_date"] == search_date_display]
         appointments.sort(key=lambda item: (item["appointment_date"], item["appointment_time"]))
 
         page = request.args.get("page", 1, type=int)
@@ -74,10 +77,12 @@ def create_app(db_path=None):
         end = start + per_page
         paginated_appointments = appointments[start:end]
 
+        today_date = datetime.now().strftime("%Y-%m-%d")
         return render_template(
             "agenda.html",
             appointments=paginated_appointments,
-            search_date=search_date,
+            search_date=search_date or today_date,
+            today_date=today_date,
             page=page,
             total_pages=total_pages,
             total_results=len(appointments),

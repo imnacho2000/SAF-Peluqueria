@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -50,6 +51,46 @@ class AppTests(unittest.TestCase):
         response = self.client.get("/agenda?search_date=2026-07-21")
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Maria Lopez", response.data)
+
+    def test_agenda_opens_filtered_by_todays_date(self):
+        today = datetime.now().strftime("%d/%m/%Y")
+        tomorrow = (datetime.now() + timedelta(days=1)).strftime("%d/%m/%Y")
+
+        self.client.post(
+            "/appointments",
+            data={
+                "client_name": "Carlos",
+                "client_last_name": "Diaz",
+                "phone": "555000111",
+                "service": "Corte",
+                "appointment_date": today,
+                "appointment_time": "18:00",
+            },
+            follow_redirects=True,
+        )
+        self.client.post(
+            "/appointments",
+            data={
+                "client_name": "Pedro",
+                "client_last_name": "Ruiz",
+                "phone": "555000222",
+                "service": "Corte",
+                "appointment_date": tomorrow,
+                "appointment_time": "18:30",
+            },
+            follow_redirects=True,
+        )
+
+        self.client.post(
+            "/agenda",
+            data={"agenda_password": "123"},
+            follow_redirects=True,
+        )
+
+        response = self.client.get("/agenda")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Carlos Diaz", response.data)
+        self.assertNotIn(b"Pedro Ruiz", response.data)
 
     def test_can_create_and_lookup_appointment(self):
         response = self.client.post(
