@@ -1,0 +1,112 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f7f3ee;
+    color: #2e2a26;
+}
+
+.hero {
+    background: linear-gradient(135deg, #6b4f3b, #a8704f);
+    color: white;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
+}
+
+.panel {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1rem;
+}
+
+form {
+    display: grid;
+    gap: 0.8rem;
+}
+
+label {
+    display: grid;
+    gap: 0.25rem;
+    font-weight: 600;
+}
+
+input,
+select,
+button {
+    padding: 0.75rem;
+    border-radius: 10px;
+    border: 1px solid #d8c2a5;
+    font-size: 1rem;
+}
+
+button {
+    background: #6b4f3b;
+    color: white;
+    cursor: pointer;
+}
+
+button.danger {
+    background: #b33a3a;
+}
+
+.flash-list {
+    margin-bottom: 1rem;
+}
+
+.flash {
+    padding: 0.8rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+}
+
+.flash.success {
+    background: #e6f7e7;
+    color: #2f6b2f;
+}
+
+.flash.danger {
+    background: #fde7e7;
+    color: #8f2d2d;
+}
+
+.appointment-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.appointment-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #efe2d0;
+    border-radius: 12px;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    font-size: 0.8rem;
+    opacity: 0.85;
+}
+
+.muted {
+    color: #756552;
+    margin-top: -0.2rem;
+}

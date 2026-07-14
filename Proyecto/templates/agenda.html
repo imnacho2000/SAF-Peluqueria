@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agenda - Sef Peluqueria</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+
+<body>
+    <header class="hero">
+        <div>
+            <p class="eyebrow">Peluquería masculina</p>
+            <h1>Agenda de turnos</h1>
+            <p><a href="{{ url_for('index') }}">Volver al inicio</a> | <a href="{{ url_for('export_csv') }}">Descargar
+                    CSV</a></p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="panel">
+            <h2>Turnos registrados</h2>
+            <form method="get" action="{{ url_for('agenda') }}" style="margin-bottom: 1rem;">
+                <label>
+                    Buscar por fecha
+                    <input type="date" name="search_date" value="{{ search_date or '' }}" />
+                </label>
+                <button type="submit">Filtrar</button>
+                {% if search_date %}
+                <a href="{{ url_for('agenda') }}">Limpiar</a>
+                {% endif %}
+            </form>
+            {% if appointments %}
+            <p class="muted">Mostrando {{ total_results }} turno(s) · Página {{ page }} de {{ total_pages }}</p>
+            <ul class="appointment-list">
+                {% for appointment in appointments %}
+                <li>
+                    <div>
+                        <strong>{{ appointment.client_name }} {{ appointment.client_last_name }}</strong>
+                        <p>{{ appointment.service }} · {{ appointment.appointment_date }} {{
+                            appointment.appointment_time }}</p>
+                        <small>Teléfono: {{ appointment.phone }} · Código: {{ appointment.access_code }}</small>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="actions">
+                {% if page > 1 %}
+                <a href="{{ url_for('agenda', page=page-1, search_date=search_date) }}">Anterior</a>
+                {% endif %}
+                {% if page < total_pages %} <a href="{{ url_for('agenda', page=page+1, search_date=search_date) }}">
+                    Siguiente</a>
+                    {% endif %}
+            </div>
+            {% if total_results > 0 %}
+            <p><a href="{{ url_for('export_csv', search_date=search_date) }}">Descargar CSV</a></p>
+            {% endif %}
+            {% else %}
+            <p>No hay turnos registrados todavía.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+
+</html>

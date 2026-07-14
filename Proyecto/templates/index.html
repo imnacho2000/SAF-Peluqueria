@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sef Peluqueria</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <header class="hero">
+        <div>
+            <p class="eyebrow">Peluquería masculina</p>
+            <h1>Sef Peluqueria</h1>
+            <p>Reserva tu turno en minutos y gestiona tus citas desde un solo lugar.</p>
+            <p>
+                <a href="{{ url_for('agenda') }}">Ver turnos</a>
+            </p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="panel">
+            <h2>{% if selected %}Editar turno{% else %}Agendar turno{% endif %}</h2>
+            <p class="muted">Atendemos de martes a sábado, de 10:00 a 13:00 y de 14:30 a 20:00.</p>
+            <form method="post"
+                action="{% if selected %}{{ url_for('update_appointment', appointment_id=selected.id) }}{% else %}{{ url_for('create_appointment') }}{% endif %}">
+                <label>
+                    Nombre
+                    <input type="text" name="client_name" value="{{ selected.client_name if selected else '' }}"
+                        required />
+                </label>
+                <label>
+                    Apellido
+                    <input type="text" name="client_last_name"
+                        value="{{ selected.client_last_name if selected else '' }}" required />
+                </label>
+                <label>
+                    Teléfono
+                    <input type="text" name="phone" value="{{ selected.phone if selected else '' }}" required />
+                </label>
+                <label>
+                    Servicio
+                    <select name="service" required>
+                        <option value="" disabled {% if not selected %}selected{% endif %}>Elegí un servicio</option>
+                        <option value="Corte" {% if selected and selected.service=='Corte' %}selected{% endif %}>Corte
+                        </option>
+                        <option value="Corte + Barba" {% if selected and selected.service=='Corte + Barba' %}selected{%
+                            endif %}>Corte + Barba</option>
+                    </select>
+                </label>
+                <label>
+                    Fecha
+                    <input type="date" name="appointment_date" id="appointment_date"
+                        value="{{ (selected.appointment_date[6:10] + '-' + selected.appointment_date[3:5] + '-' + selected.appointment_date[0:2]) if selected and selected.appointment_date and '/' in selected.appointment_date else (selected.appointment_date if selected else '') }}"
+                        required />
+                </label>
+                <label>
+                    Hora
+                    <select name="appointment_time" id="appointment_time" required>
+                        <option value="" disabled selected>Elegí una hora</option>
+                    </select>
+                </label>
+                {% if selected %}
+                <label>
+                    Código de turno
+                    <input type="text" name="access_code" value="{{ selected.access_code if selected else '' }}"
+                        required />
+                </label>
+                {% endif %}
+                <button type="submit">{% if selected %}Guardar cambios{% else %}Crear turno{% endif %}</button>
+            </form>
+        </section>
+
+        <section class="panel">
+            <h2>Consultar tu turno</h2>
+            <form method="post" action="{{ url_for('lookup_appointment') }}">
+                <label>
+                    Código de turno
+                    <input type="text" name="access_code" placeholder="123456" required />
+                </label>
+                <button type="submit">Buscar</button>
+            </form>
+        </section>
+
+        {% if appointments %}
+        <section class="panel">
+            <h2>Tu turno</h2>
+            <ul class="appointment-list">
+                {% for appointment in appointments %}
+                <li>
+                    <div>
+                        <strong>{{ appointment.client_name }} {{ appointment.client_last_name }}</strong>
+                        <p>{{ appointment.service }} · {{ appointment.appointment_date }} {{
+                            appointment.appointment_time }}</p>
+                        <small>{{ appointment.phone }} · Código: {{ appointment.access_code }}</small>
+                    </div>
+                    <div class="actions">
+                        <a href="{{ url_for('edit_appointment', appointment_id=appointment.id) }}">Editar</a>
+                        <form method="post" action="{{ url_for('delete_appointment', appointment_id=appointment.id) }}"
+                            onsubmit="return confirm('¿Eliminar este turno?');">
+                            <input type="hidden" name="access_code" value="{{ appointment.access_code }}" />
+                            <button class="danger" type="submit">Eliminar</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+    </main>
+
+    <script>
+        const dateInput = document.getElementById('appointment_date');
+        const timeSelect = document.getElementById('appointment_time');
+
+        function populateAvailableTimes(dateValue) {
+            if (!dateValue) {
+                timeSelect.innerHTML = '<option value="" disabled selected>Elegí una hora</option>';
+                return;
+            }
+
+            fetch(`/availability?appointment_date=${encodeURIComponent(dateValue)}`)
+                .then(response => response.json())
+                .then(data => {
+                    const times = data.available_times || [];
+                    const selectedValue = timeSelect.value;
+                    timeSelect.innerHTML = '<option value="" disabled selected>Elegí una hora</option>';
+                    times.forEach(time => {
+                        const option = document.createElement('option');
+                        option.value = time;
+                        option.textContent = time;
+                        if (selectedValue === time) {
+                            option.selected = true;
+                        }
+                        timeSelect.appendChild(option);
+                    });
+                });
+        }
+
+        dateInput.addEventListener('change', () => populateAvailableTimes(dateInput.value));
+        if (dateInput.value) {
+            populateAvailableTimes(dateInput.value);
+        }
+    </script>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="visually-hidden" aria-hidden="true">
+        {% for category, message in messages %}
+        <span data-flash-category="{{ category }}">{{ message }}</span>
+        {% endfor %}
+    </div>
+    <script>
+        const flashMessages = {{ messages | tojson }};
+        flashMessages.forEach(([category, message]) => {
+            const icon = category === 'danger' ? 'error' : 'success';
+            Swal.fire({
+                icon,
+                title: category === 'danger' ? 'Atención' : 'Éxito',
+                text: message,
+                confirmButtonColor: '#6b4f3b'
+            });
+        });
+    </script>
+    {% endif %}
+    {% endwith %}
+</body>
+
+</html>
