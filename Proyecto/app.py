@@ -4,7 +4,7 @@ import random
 import sqlite3
 from datetime import datetime, timedelta
 
-from flask import Flask, abort, current_app, flash, g, has_app_context, redirect, render_template, request, send_file, session, url_for
+from flask import Flask, abort, current_app, flash, g, has_app_context, redirect, render_template, request, send_file, url_for
 
 try:
     from google.oauth2 import service_account
@@ -37,23 +37,9 @@ def create_app(db_path=None):
                 selected = appointment
         return render_template("index.html", appointments=appointments, selected=selected)
 
-    def agenda_access_granted():
-        return session.get("agenda_access") is True
-
-    @app.route("/agenda", methods=["GET", "POST"])
-    def agenda():
-        if not agenda_access_granted():
-            error_message = None
-            if request.method == "POST":
-                provided_password = request.form.get("agenda_password", "").strip()
-                if provided_password == app.config.get("AGENDA_PASSWORD", "").strip():
-                    session["agenda_access"] = True
-                    return redirect(url_for("agenda"))
-                error_message = "Contraseña incorrecta"
-            return render_template("agenda_login.html", error_message=error_message)
-
+    def render_agenda_page(search_date_value="", page=1):
         appointments = get_appointments()
-        search_date = request.args.get("search_date", "").strip()
+        search_date = search_date_value.strip()
         if not search_date:
             search_date = datetime.now().strftime("%Y-%m-%d")
 
@@ -66,7 +52,6 @@ def create_app(db_path=None):
         appointments = [a for a in appointments if a["appointment_date"] == search_date_display]
         appointments.sort(key=lambda item: (item["appointment_date"], item["appointment_time"]))
 
-        page = request.args.get("page", 1, type=int)
         per_page = 10
         total_pages = max(1, (len(appointments) + per_page - 1) // per_page)
         if page < 1:
@@ -87,6 +72,18 @@ def create_app(db_path=None):
             total_pages=total_pages,
             total_results=len(appointments),
         )
+
+    @app.route("/agenda", methods=["GET", "POST"])
+    def agenda():
+        if request.method == "POST":
+            provided_password = request.form.get("agenda_password", "").strip()
+            if provided_password == app.config.get("AGENDA_PASSWORD", "").strip():
+                search_date = request.args.get("search_date", "").strip()
+                page = request.args.get("page", 1, type=int)
+                return render_agenda_page(search_date_value=search_date, page=page)
+            return render_template("agenda_login.html", error_message="Contraseña incorrecta")
+
+        return render_template("agenda_login.html", error_message=None)
 
     @app.route("/agenda/change-password", methods=["GET", "POST"])
     def change_agenda_password():
@@ -109,7 +106,6 @@ def create_app(db_path=None):
                 return redirect(url_for("change_agenda_password"))
 
             app.config["AGENDA_PASSWORD"] = new_password
-            session.pop("agenda_access", None)
             flash("Contraseña de agenda actualizada", "success")
             return redirect(url_for("agenda"))
 
